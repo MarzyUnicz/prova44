@@ -1,0 +1,70 @@
+---
+title: "MMRFBiolinksXClinical data"
+date: "`r BiocStyle::doc_date()`"
+author:
+- name: First Author
+  affiliation: First Author's Affiliation
+- name: Second Author
+  affiliation: Second Author's Affiliation
+  email: corresponding@author.com
+package: MMRFBiolinksX
+
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{"4. Clinical data"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+```{r setup}
+library(MMRFBiolinksX)
+```
+
+```{r, echo=FALSE, warning=FALSE}
+# This code chunk simply makes sure that all the libraries used here are installed, it will not be shown in the report (notice echo = FALSE).
+packages <- c("knitr", "dplyr", "plotly","DT","TCGAbiolinks","SummarizedExperiment")
+if ( length(missing_pkgs <- setdiff(packages, rownames(installed.packages()))) > 0) {
+  message("Installing missing package(s): ", paste(missing_pkgs, collapse = ", "))
+  install.packages(missing_pkgs)
+}
+```
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(dplyr)
+library(DT)
+```
+
+
+
+
+#  Useful information
+
+<div class="panel panel-info">
+<div class="panel-heading">MMRF-Compass Project</div>
+<div class="panel-body">
+
+
+.................
+
+</div>
+</div>
+
+# Clinical indexed data
+In this example we will fetch clinical indexed data (same as showed in the data portal).
+
+```{r results='hide', echo=TRUE, message=FALSE, warning=FALSE}
+clinical <- MMRFquery_clinic(type = "clinical")
+```
+
+```{r  echo=TRUE, message=FALSE, warning=FALSE}
+clinical %>% head %>% 
+  DT::datatable(filter = 'top', 
+          options = list(scrollX = TRUE, keys = TRUE, pageLength = 5),  
+          rownames = FALSE)
+```
+
+
+

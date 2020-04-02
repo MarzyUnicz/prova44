@@ -1,0 +1,59 @@
+---
+title: "MMRFBiolinks Introduction"
+date: "`r BiocStyle::doc_date()`"
+author:
+- name: First Author
+  affiliation: First Author's Affiliation
+- name: Second Author
+  affiliation: Second Author's Affiliation
+  email: corresponding@author.com
+package: MMRFBiolinksX
+
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{"1. Introduction"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+MMRFBiolinks is an extension of [TCGAbiolinks package](https://bioconductor.org/packages/TCGAbiolinks/)
+for searching, downloading and preparing data from the Multiple Myeloma Research Foundation (MMRF) CoMMpass study available at the NCI's Genomic Data Commons (GDC) Data Portal. 
+
+
+
+# Citation
+If you use MMRFBiolinks, please cite:
+
+
+<hr>
+# Installation
+<hr>
+
+
+# Question and issues
+<hr>
+Please use [Github issues](https://github.com/MarzyUnicz/MMRFBiolinksX/issues) if you want to file bug reports or feature requests
+
+
+# Required libraries
+<hr>
+The examples in this tutorial use the following libraries: 
+```{r message=FALSE, warning=FALSE, include=TRUE}
+library(TCGAbiolinks)
+library(dplyr)
+library(DT)
+```
+
+# Session info
+<hr>
+```{r}
+version
+packageVersion("MMRFBiolinksX")
+```

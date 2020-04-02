@@ -1,0 +1,194 @@
+---
+title: "Downloading and preparing files for analysis"
+date: "`r BiocStyle::doc_date()`"
+author:
+- name: First Author
+  affiliation: First Author's Affiliation
+- name: Second Author
+  affiliation: Second Author's Affiliation
+  email: corresponding@author.com
+package: MMRFBiolinksX
+output:
+  BiocStyle::html_document
+abstract: |
+  Description of your vignette
+vignette: |
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(progress = FALSE)
+```
+
+
+```{r, echo=FALSE, warning=FALSE}
+# This code chunk simply makes sure that all the libraries used here are installed, it will not be shown in the report (notice echo = FALSE).
+packages <- c("knitr", "dplyr", "plotly","DT")
+if ( length(missing_pkgs <- setdiff(packages, rownames(installed.packages()))) > 0) {
+  message("Installing missing package(s): ", paste(missing_pkgs, collapse = ", "))
+  install.packages(missing_pkgs)
+}
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(dplyr)
+library(DT)
+```
+
+
+
+# Downloading and preparing data for analysis
+
+<div class="panel panel-info">
+<div class="panel-heading">Data download: Methods differences</div>
+<div class="panel-body">
+
+
+There are two methods to download GDC data using TCGAbiolinks:
+
+- client: this method creates a MANIFEST file and download the data using [GDC Data Transfer Tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool)
+    this method is more reliable but it might be slower compared to the api method.
+- api: this methods used the [GDC Application Programming Interface (API)](https://gdc.cancer.gov/developers/gdc-application-programming-interface-api) to download the data.
+    This will create a MANIFEST file and the data downloaded will be compressed into a tar.gz file. If the size and the number of the files are too big this tar.gz will be too big
+    which might have a high probability of download failure. To solve that we created the `files.per.chunk` argument which will split the files
+    into small chunks, for example, if chunks.per.download is equal to 10 we will download only 10 files inside each tar.gz.
+
+</div>
+</div>
+
+
+
+<div class="panel panel-info">
+<div class="panel-heading">Data prepared: SummarizedExperiment object</div>
+<div class="panel-body">
+
+
+A [SummarizedExperiment object](http://www.nature.com/nmeth/journal/v12/n2/fig_tab/nmeth.3252_F2.html) 
+has three main matrices that can be accessed using the [SummarizedExperiment package](http://bioconductor.org/packages/SummarizedExperiment/)): 
+
+- Sample matrix information is accessed via `colData(data)`: stores sample information. TCGAbiolinks will add indexed clinical data and subtype information from marker TCGA papers.
+- Assay matrix information is accessed via `assay(data)`: stores molecular data 
+- Feature matrix information (gene information) is accessed via `rowRanges(data)`: stores metadata about the features, including their genomic ranges
+
+</div>
+</div>
+
+<div class="panel panel-warning">
+<div class="panel-heading">Summarized Experiment: annotation information</div>
+<div class="panel-body">
+
+
+When using the function `GDCprepare` there is an argument called `SummarizedExperiment`
+which defines the output type a Summarized Experiment (default option) or a data frame.
+To create a summarized Experiment object we annotate the data with genomic positions
+with last patch release version of the genome available. 
+For legacy data (data aligned to hg19) TCGAbiolinks is using GRCh37.p13 and for 
+harmonized data (data aligned to hg38) now it is using GRCh38.p7 (May 2017).
+
+Unfortunately, some of the updates changes/remove gene symbols, change coordinates, etc. 
+Which might introduce some loss of data. For example, if the gene was removed we cannot map
+it anymore and that information will be lost in the `SummarizedExperiment`.
+
+If you set `SummarizedExperiment` to `FALSE`, you will get the data unmodified 
+just as they are in the files and ad your own annotation.
+
+Also, there are no updated for DNA methylation data. But the last metadata available can be found
+here: [http://zwdzwd.github.io/InfiniumAnnotation](http://zwdzwd.github.io/InfiniumAnnotation)
+
+Related discussions: [issue 91](https://github.com/BioinformaticsFMRP/TCGAbiolinks/issues/91),
+[issue 50](https://github.com/BioinformaticsFMRP/TCGAbiolinks/issues/50)
+
+</div>
+</div>
+## Arguments 
+
+
+### `GDCdownload`
+
+MMRFBiolinks is an extension of [TCGAbiolinks package](https://bioconductor.org/packages/TCGAbiolinks/)
+which should be consulted.
+
+### `MMRFprepare`
+| Argument 	| Description	|
+|-------------------------------	|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| query 	| A query for GDCquery function 	|
+| save 	| Save result as RData object? 	|
+| save.filename 	| Name of the file to be save if empty an automatic will be created 	|
+| directory 	| Directory/Folder where the data was downloaded. Default: GDCdata 	|
+| summarizedExperiment 	| Create a summarizedExperiment? Default TRUE (if possible) 	|
+| remove.files.prepared 	| Remove the files read? Default: FALSE This argument will be considered only if save argument is set to true 	|
+| add.gistic2.mut 	| If a list of genes (gene symbol) is given, columns with gistic2 results from GDAC firehose (hg19) and a column indicating if there is or not mutation in that gene (hg38) (TRUE or FALSE - use the MAF file for more information) will be added to the sample matrix in the summarized Experiment object. 	|
+| mut.pipeline 	| If add.gistic2.mut is not NULL this field will be taken in consideration. Four separate variant calling pipelines are implemented for GDC data harmonization. Options: muse, varscan2, somaticsniper, MuTect2. For more information: https://gdc-docs.nci.nih.gov/Data/Bioinformatics_Pipelines/DNA_Seq_Variant_Calling_Pipeline/ 	|
+| mutant_variant_classification 	| List of mutant_variant_classification that will be consider a sample mutant or not. Default: "Frame_Shift_Del", "Frame_Shift_Ins", "Missense_Mutation", "Nonsense_Mutation", "Splice_Site", "In_Frame_Del", "In_Frame_Ins", "Translation_Start_Site", "Nonstop_Mutation" 	|
+
+## Search and download data from MMRF-Compass database using GDC api method
+
+In this example we will download gene expression data from MMRF-Commpass database using GDC api method and  we will show object data and metadata.
+```{r results = 'hide', message=FALSE, warning=FALSE, eval = F}
+
+query.mm.fpkm <- GDCquery(project = "MMRF-COMMPASS",
+                          data.category = "Transcriptome Profiling",
+                          data.type = "Gene Expression Quantification",
+                          workflow.type="HTSeq - FPKM",
+                          barcode = c("MMRF_2473","MMRF_2111"))
+
+GDCdownload(query.mm.fpkm)
+
+data<-MMRFprepare(query.mm.fpkm,
+                           save = TRUE ,
+                           save.filename = "MMCompassFPKM.rda" ,
+                           directory = "GDCdata" ,
+                           summarizedExperiment = TRUE)
+```
+
+
+
+
+
+
+
+
+# `MMRFprepare`: Outputs
+
+
+
+
+
+| Data.category               | Data.type                         | Workflow Type                 | Access                                                             
+|-----------------------------|-----------------------------------|-------------------------------|---------------------------------|
+| Transcriptome Profiling     | Gene Expression Quantification    |  HTSeq - Counts               |                                 |                                             |                             |                                   |                               |                                 |
+|                             |                                   |  HTSeq - FPKM-UQ              |                                 |                                             |                             |                                   |                               |                                 |
+|                             |                                   |  HTSeq - FPKM                 | Open / Controlled               |                                             
+|                             |                                   |  STAR - Counts                |                                 | 
+|                             |                                   |                               |                                 |
+|                             | Splice Junction Quantification    |  STAR - Counts                |                                 |                           
+|-----------------------------|-----------------------------------|-------------------------------|---------------------------------|               
+| Simple Nucleotide Variation | Raw Simple Somatic Mutation       |  MuSE                         |                                 |
+|                             |                                   |  SomaticSniper                |                                 |
+|                             |                                   |  VarScan2                     | Controlled                      |
+|                             |                                   |  Pindel                       |                                 |
+|                             |                                   |  MuTect2                      |                                 |
+|                             |                                   |                               |                                 |
+|                             | Annotated Somatic Mutation        |  MuSE Annotation              |                                 |
+|                             |                                   |  VarScan2 Annotation          |                                 |
+|                             |                                   |  Pindel Annotation            |                                 |
+|                             |                                   |  MuTect2 Annotation           |                                 |
+|                             |                                   |  SomaticSniper Annotation     |                                 |
+|-----------------------------|-----------------------------------|-------------------------------|---------------------------------|
+| Sequencing Reads            | Aligned Reads                     |  BWA with Mark Duplicates and BQSR                              |
+|                             |                                   |  STAR 2-Pass Genome           |  Controlled                     |
+|                             |                                   |  STAR 2-Pass Transcriptome    |                                 |
+|-----------------------------|-----------------------------------|-------------------------------|---------------------------------|
+
+
+
+
+
+
+
